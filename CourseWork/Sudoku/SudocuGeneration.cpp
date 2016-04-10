@@ -3,12 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#define setBit(var, bit)    var |= 1 << bit
-#define checkBit(var, bit)  var & (1 << bit)
-
-
-enum { CLEAN = -1, LINE, ROW, SECTOR };
-
 struct _cell {
 	uint8_t  value, line, row, sector;
 	uint16_t used;
@@ -21,7 +15,6 @@ t_cell  sol[81];
 
 SudocuGeneration::SudocuGeneration() {}
 SudocuGeneration::~SudocuGeneration() {}
-
 
 int SudocuGeneration::generationMas(int **data)
 {

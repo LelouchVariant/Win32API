@@ -1,5 +1,8 @@
 #pragma once
 
+#define setBit(var, bit)    var |= 1 << bit
+#define checkBit(var, bit)  var & (1 << bit)
+
 class SudocuGeneration
 {
 public:
@@ -9,6 +12,7 @@ public:
 	int generationMas(int **data);
 
 private:
-	int checkCell(int cell);			
+	int checkCell(int cell);	
+	enum { CLEAN = -1, LINE, ROW, SECTOR };
 };
 

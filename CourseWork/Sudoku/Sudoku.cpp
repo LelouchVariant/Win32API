@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "Sudoku.h"
 #include "SudocuGeneration.h"
@@ -16,6 +15,9 @@ HWND hwndERROR;
 
 int **data = NULL;
 FILE *Fz;
+
+static int count = 0;
+static int gameLevel = 2;
 
 struct TZap
 {
@@ -52,9 +54,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	{
 		return FALSE;
 	}
-
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_SUDOKU));
-
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -64,7 +64,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-
 	return (int) msg.wParam;
 }
 
@@ -87,7 +86,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
 	return RegisterClassEx(&wcex);
 }
-
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
@@ -112,10 +110,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-static int count = 0;
-static int gameLevel = 2;
-
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
@@ -123,31 +117,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		PAINTSTRUCT ps;
 
-
 		int wmId, wmEvent;
-		static HDC hCmpDC, hDC;
-		HBITMAP hBitmap;
-		static HDC memBit;
+		static HDC hCmpDC, hDC, memBit;		
 		static BITMAP bm;
-
 		static HFONT hFont;
+		HBITMAP hBitmap;	
 		RECT Rect;
 		TEXTMETRIC tm;
 		TCHAR str[256];
 
-
+#pragma region WMCreate
 	case WM_CREATE:
 	{
 		SetTimer(hWnd, 1, 1000, NULL);
 		hFont = CreateFont(33, 0, 0, 0, 700, 1, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Brush Script MT");
-		
 		PlaySound(MAKEINTRESOURCE(IDR_WAVE1), GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_LOOP);
-
 
 		data = new int*[9]; 			// Захват памяти под указатели
 		for (int i = 0; i < 9; i++)
 			data[i] = new int[9]; 		// Захват памяти под элементы
-
 
 		//массив переменных
 		int numberX = 0;
@@ -162,7 +150,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if ((j + 1) % 3 == 0) numberX += 42;
 				else numberX += 39;
 			}
-
 			if ((i + 1) % 3 == 0)
 			{
 				numberX = 0;
@@ -173,16 +160,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				numberY += 39;
 				numberX = 0;
 			}
-
 		}
 		hFont = CreateFont(39, 0, 0, 0, 700, 1, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Brush Script MT");
+
 		SudocuGeneration *NewSudo = new SudocuGeneration();
-
 		NewSudo->generationMas(data);
-
 		printSudoku(gameLevel);
 		delete NewSudo;
-
 
 		hwndHELP = CreateWindow(L"button", L"", WS_VISIBLE | WS_CHILD | BS_BITMAP | BS_ICON, 770, 250, 55, 55, hWnd, 0, NULL, NULL);
 		hwndERROR = CreateWindow(L"button", L"", WS_VISIBLE | WS_CHILD | BS_BITMAP | BS_ICON, 770, 310, 55, 55, hWnd, 0, NULL, NULL);
@@ -202,8 +186,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			0, 0, LR_DEFAULTCOLOR));
 	}
 	break;
+#pragma endregion WMCreate
 
-
+#pragma region WMPaint
 
 	case WM_PAINT:
 	{
@@ -212,9 +197,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		// Создание теневогоs контекста для двойной буфферизации
 		hCmpDC = CreateCompatibleDC(hDC);
-
-
-
 
 		hBitmap = LoadBitmap(GetModuleHandle(0), MAKEINTRESOURCE(IDB_BITMAP1));
 		GetObject(hBitmap, sizeof(bm), &bm);
@@ -232,12 +214,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		else if (b < 10) _stprintf_s(str, L" %d:0%d ", a, b);
 		else if (a < 10) _stprintf_s(str, L" 0%d:%d ", a, b);
 
-
-
 		SetRect(&Rect, 750, 10, 860, 100);
 		DrawText(hCmpDC, str, _tcslen(str), &Rect, DT_LEFT);
-
-
 
 		// Здесь рисуем на контексте hCmpDC
 
@@ -245,26 +223,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetStretchBltMode(hDC, COLORONCOLOR);
 		BitBlt(hDC, 0, 0, bm.bmWidth, bm.bmHeight, hCmpDC, 0, 0, SRCCOPY);
 
-
 		// Удаляем ненужные системные объекты
 		DeleteDC(hCmpDC);
 		DeleteObject(hBitmap);
 		DeleteObject(hCmpDC);
 		hCmpDC = NULL;
-
 		EndPaint(hWnd, &ps);
 	}
 	break;
 
+#pragma endregion WMPaint
 
 
 	case WM_COMMAND:
 	{
-
 		TCHAR buf[256];
 		TCHAR buf2[256];
 
-
+		#pragma region ButtonClick
 
 		if ((HWND)lParam == hwndERROR)
 		{
@@ -287,8 +263,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		if ((HWND)lParam == hwndHELP)
 		{
-
-
 			int countError = 0;
 
 			for (int i = 0; i < 9; i++)
@@ -301,109 +275,71 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			if (!countError){
+			if (!countError) {
 				MessageBox(hWnd, L"The game is solved!", L"Help", 0);
 				break;
 			}
 
-
-
-
 			int number1 = 0, number2 = 0;
 			srand(time(0));
-
 			do {
 				number1 = 0 + rand() % 9;
 				number2 = 0 + rand() % 9;
 				GetWindowText(editBox[number1][number2], buf, 256);
-
-
-
 				_stprintf_s(buf2, L"%d", data[number1][number2]);
-
-
 				if (wcscmp(buf, buf2) || !(wcscmp(buf, L""))) break;
-
-
 			} while (1);
-
 
 			_stprintf_s(buf, L"%d", data[number1][number2]);
 			SetWindowText(editBox[number1][number2], buf);
 
 		}
 
-
 		if ((HWND)lParam == hwndSOlVE)
 		{
 			int countError = 0;
-
 			for (int i = 0; i < 9; i++)
 			{
-				for (int j = 0; j < 9; j++)
-				{
+				for (int j = 0; j < 9; j++) {
 					GetWindowText(editBox[i][j], buf, 256);
 					_stprintf_s(buf2, L"%d", data[i][j]);
 					if (wcscmp(buf, buf2)) countError++;
 				}
 			}
-
-
-
-
-
-			if (!countError){
-
-				//******************************************************************************************************************************************************************************
-
+			if (!countError) {
 
 				int size = sizeof(TZap);
-
 				Fz = nullptr;
-				if ((fopen_s(&Fz, "statistic.dat", "ab")) == NULL)
-				{
+
+				if ((fopen_s(&Fz, "statistic.dat", "ab")) == NULL) {
 					_wstrdate_s(Zap.date, 256);
 
 
 					Zap.counts = count;
 					fwrite(&Zap, size, 1, Fz);
 				}
-				else
-				{
-					MessageBox(hWnd, L"File statistic not found!", L"Message", MB_OK);
-				}
-
-
+				else MessageBox(hWnd, L"File statistic not found!", L"Message", MB_OK);
+				
 				TCHAR ST[256];
 				_stprintf_s(ST, L" You win! Your time  %d : %d ", count / 60, count % 60);
-
 				MessageBox(hWnd, ST, L"Rezult", 0);
-
 				fclose(Fz);
 
 				SudocuGeneration *NewSudo = new SudocuGeneration();
-
 				NewSudo->generationMas(data);
-
 				printSudoku(gameLevel);
 				delete NewSudo;
 			}
-			else
-			{
-				MessageBox(hWnd,L"The game has not been solved!",L"Rezult",MB_OK);
-			}
-
-
+			else MessageBox(hWnd, L"The game has not been solved!", L"Rezult", MB_OK);	
 		}
 
+		#pragma endregion ButtonClick
 
-
-
-
+		#pragma region Menu
 
 		wmId = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
-		// Parse the menu selections:
+		
 		switch (wmId)
 		{
 		case ID_NEWGAME_EASY:
@@ -441,14 +377,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case ID_STATISTIC:
 		{
-			//******************************************************************************************************************************************************************************
 			int size = sizeof(TZap);
-
 			Fz = nullptr;
+
 			if ((fopen_s(&Fz, "statistic.dat", "rb")) == NULL)
 			{
-
-
 				int kod, D_f, kol;
 				long len;
 
@@ -523,7 +456,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 
-
+	#pragma endregion Menu
 	}
 	break;
 	case WM_TIMER:
@@ -546,7 +479,6 @@ int printSudoku(int level)
 	TCHAR buuf[256];
 	int number1 = 0, number2 = 0;
 	count = 0;
-
 
 	for (int i = 0; i < 9; i++)
 		for (int j = 0; j < 9; j++)
